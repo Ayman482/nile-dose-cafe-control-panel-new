@@ -29,16 +29,33 @@ app.use(fileUpload({
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Connect to MongoDB
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://niledose_admin:11242dmin@niledosecafe.1upxqhh.mongodb.net/?retryWrites=true&w=majority&appName=NileDoseCafe';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://admin:admin@cluster0.mongodb.net/niledosecafe?retryWrites=true&w=majority';
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000,
+  serverSelectionTimeoutMS: 10000,
   socketTimeoutMS: 45000,
-  family: 4  // Force IPv4
+  family: 4,  // Force IPv4
+  connectTimeoutMS: 30000,
+  keepAlive: true,
+  keepAliveInitialDelay: 300000
 })
 .then(() => console.log('تم الاتصال بقاعدة البيانات بنجاح'))
-.catch(err => console.error('خطأ في الاتصال بقاعدة البيانات:', err));
+.catch(err => {
+  console.error('خطأ في الاتصال بقاعدة البيانات:', err);
+  // Try alternative connection if SRV fails
+  const fallbackURI = MONGO_URI.replace('mongodb+srv://', 'mongodb://');
+  console.log('Attempting fallback connection...');
+  return mongoose.connect(fallbackURI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 10000,
+    socketTimeoutMS: 45000,
+    family: 4
+  });
+})
+.then(() => console.log('Connection successful (possibly via fallback)'))
+.catch(err => console.error('All connection attempts failed:', err));
 
 // Routes
 app.use('/api/auth', authRoutes);
