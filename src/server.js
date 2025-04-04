@@ -29,10 +29,13 @@ app.use(fileUpload({
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Connect to MongoDB
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://admin:admin@cluster0.mongodb.net/niledosecafe?retryWrites=true&w=majority';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://niledose_admin:11242dmin@niledosecafe.1upxqhh.mongodb.net/?retryWrites=true&w=majority&appName=NileDoseCafe';
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  family: 4  // Force IPv4
 })
 .then(() => console.log('تم الاتصال بقاعدة البيانات بنجاح'))
 .catch(err => console.error('خطأ في الاتصال بقاعدة البيانات:', err));
