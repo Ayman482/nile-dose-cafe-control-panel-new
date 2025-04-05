@@ -1,10 +1,12 @@
 // Server file for Nile Dose Cafe Control Panel
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const fileUpload = require('express-fileupload');
 const path = require('path');
+
+// Import database connection
+const connectDB = require('./database');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -14,7 +16,7 @@ const settingsRoutes = require('./routes/settings');
 const uploadRoutes = require('./routes/uploads');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
 // Middleware
 app.use(cors());
@@ -29,33 +31,9 @@ app.use(fileUpload({
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Connect to MongoDB
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://admin:admin@cluster0.mongodb.net/niledosecafe?retryWrites=true&w=majority';
-mongoose.connect(MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 10000,
-  socketTimeoutMS: 45000,
-  family: 4,  // Force IPv4
-  connectTimeoutMS: 30000,
-  keepAlive: true,
-  keepAliveInitialDelay: 300000
-})
-.then(() => console.log('تم الاتصال بقاعدة البيانات بنجاح'))
-.catch(err => {
-  console.error('خطأ في الاتصال بقاعدة البيانات:', err);
-  // Try alternative connection if SRV fails
-  const fallbackURI = MONGO_URI.replace('mongodb+srv://', 'mongodb://');
-  console.log('Attempting fallback connection...');
-  return mongoose.connect(fallbackURI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 10000,
-    socketTimeoutMS: 45000,
-    family: 4
-  });
-})
-.then(() => console.log('Connection successful (possibly via fallback)'))
-.catch(err => console.error('All connection attempts failed:', err));
+connectDB()
+  .then(() => console.log('تم الاتصال بقاعدة البيانات بنجاح'))
+  .catch(err => console.error('خطأ في الاتصال بقاعدة البيانات:', err));
 
 // Routes
 app.use('/api/auth', authRoutes);
